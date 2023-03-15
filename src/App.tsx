@@ -54,6 +54,13 @@ function App() {
   };
   getAndSetAllData();
 
+  //to do: initialise docs in firebase
+  //create a handler for submit match update, create multiple matchhistrows
+  //depending on numbers passed, also have a check for cantt be 0 or empty for any
+  //and then update
+  //handle add new player, and text to refresh
+  //display fetched data in tables.
+
   return (
     <div className="App">
       <MantineProvider withGlobalStyles withNormalizeCSS>

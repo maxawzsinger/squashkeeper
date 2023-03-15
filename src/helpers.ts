@@ -29,7 +29,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-
 export const mainCollect = collection(db, "main");
 
 type dataType = Record<string, string | number | (string | number)[]>;
@@ -59,7 +58,10 @@ const write = async (
   await setDoc(doc(collection, documentName), data);
 };
 
-export const read = async (collection: CollectionReference, documentName: string) => {
+export const read = async (
+  collection: CollectionReference,
+  documentName: string
+) => {
   const docSnap = await getDoc(doc(collection, documentName));
   if (docSnap.exists()) {
     return docSnap.data();
@@ -67,7 +69,6 @@ export const read = async (collection: CollectionReference, documentName: string
     console.log("No such document!");
   }
 };
-
 
 export const addNewPlayer = async (newPlayerName: string) => {
   const currentPlayers = await read(mainCollect, config.playerDoc);
@@ -119,4 +120,9 @@ export const updateMatchHist = async (update: matchHistRow) => {
       }),
     });
   }
+};
+
+export const timestampToLocale = (ts: number) => {
+  const date = new Date(ts * 1000); // Convert Unix timestamp to milliseconds and create new Date object
+  return date.toLocaleTimeString(); // Get local time as a string
 };
