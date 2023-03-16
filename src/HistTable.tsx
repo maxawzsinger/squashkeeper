@@ -31,7 +31,7 @@ interface TableScrollAreaProps {
     data : matchHistRow[] ;
 }
 
-export function HistTableScrollArea({ data }: TableScrollAreaProps) {
+export function MatchHistTable({ data }: TableScrollAreaProps) {
   const { classes, cx } = useStyles();
   const [scrolled, setScrolled] = useState(false);
 

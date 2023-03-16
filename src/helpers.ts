@@ -82,7 +82,8 @@ export const addNewPlayer = async (newPlayerName: string) => {
 export const updateMatchHist = async (update: matchHistRow) => {
   const currentHist = await read(mainCollect, config.matchHistDoc);
   const currentPlayers = await read(mainCollect, config.playerDoc);
-
+  console.log("current hist", currentHist);
+  console.log("current players", currentPlayers);
   if (
     currentHist &&
     Array.isArray(currentHist.data) &&
@@ -119,10 +120,44 @@ export const updateMatchHist = async (update: matchHistRow) => {
         return player;
       }),
     });
+  } else {
+    console.log("there was an error fetching data");
   }
 };
 
 export const timestampToLocale = (ts: number) => {
   const date = new Date(ts * 1000); // Convert Unix timestamp to milliseconds and create new Date object
-  return date.toLocaleTimeString(); // Get local time as a string
+  const daysOfWeek = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  const monthsOfYear = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const dayOfWeek = daysOfWeek[date.getDay()];
+  const dayOfMonth = date.getDate();
+  const month = monthsOfYear[date.getMonth()];
+  const year = date.getFullYear();
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const seconds = date.getSeconds();
+
+  return `${dayOfWeek}, ${month} ${dayOfMonth}, ${year} at ${hours}:${minutes}:${seconds}`;
 };

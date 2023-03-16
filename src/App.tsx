@@ -13,6 +13,8 @@ import {
   NumberInput,
   Button,
 } from "@mantine/core";
+import { EloTable } from "./EloTable";
+import { MatchHistTable } from "./HistTable";
 
 const EloRating = require("elo-rating");
 
@@ -27,7 +29,7 @@ function App() {
 
   ///data display
   const [matchHistory, setMatchHistory] = React.useState<
-    DocumentData | undefined
+    matchHistRow[] | undefined
   >();
   const [eloRankings, setEloRankings] = React.useState<
     playersRow[] | undefined
@@ -41,18 +43,25 @@ function App() {
   const getAndSetAllData = async () => {
     const currentPlayers = await read(mainCollect, config.playerDoc);
     const currentHist = await read(mainCollect, config.matchHistDoc);
+    console.log("current hist", currentHist);
+    console.log("current players", currentPlayers);
     if (
       currentHist &&
-      Array.isArray(currentHist) &&
+      Array.isArray(currentHist.data) &&
       currentPlayers &&
-      Array.isArray(currentPlayers)
+      Array.isArray(currentPlayers.data)
     ) {
       //set current players for use by match update dropdown
-      setEloRankings(currentPlayers.sort((a, b) => a.elo - b.elo));
-      setMatchHistory(currentHist);
+      setEloRankings(currentPlayers.data.sort((a, b) => a.elo - b.elo));
+      setMatchHistory(currentHist.data);
+    } else {
+      console.log("issue getting data for dashboard")
     }
   };
-  getAndSetAllData();
+
+  useEffect(() => {
+    getAndSetAllData();
+  }, []);
 
   //to do: initialise docs in firebase
   //create a handler for submit match update, create multiple matchhistrows
@@ -64,37 +73,43 @@ function App() {
   return (
     <div className="App">
       <MantineProvider withGlobalStyles withNormalizeCSS>
-        {eloRankings && matchHistory ? (
-          <>
-            <Autocomplete
-              value={user}
-              onChange={(str) => handleUserChange(str)}
-              data={eloRankings.map((row) => row.name)}
-            />
-            <Text>played</Text>
-            <Autocomplete
-              value={opponent}
-              onChange={(str) => handleUserChange(str)}
-              data={eloRankings.map((row) => row.name)}
-            />
-            <Text>and won</Text>
+        <>
+          {(eloRankings && matchHistory) ? (
+            <>
+              <Autocomplete
+                value={user}
+                onChange={(str) => handleUserChange(str)}
+                data={eloRankings.map((row) => row.name)}
+              />
+              <Text>played</Text>
+              <Autocomplete
+                value={opponent}
+                onChange={(str) => handleUserChange(str)}
+                data={eloRankings.map((row) => row.name)}
+              />
+              <Text>and won</Text>
 
-            <NumberInput
-              value={matchesUserWon}
-              onChange={(num) => setMatchesUserWon(num === "" ? 0 : num)}
-            />
-            <Text>and lost</Text>
-            <NumberInput
-              value={matchesUserWon}
-              onChange={(num) => setMatchesUserWon(num === "" ? 0 : num)}
-            />
-            <Text>matches</Text>
+              <NumberInput
+                value={matchesUserWon}
+                onChange={(num) => setMatchesUserWon(num === "" ? 0 : num)}
+              />
+              <Text>and lost</Text>
+              <NumberInput
+                value={matchesUserWon}
+                onChange={(num) => setMatchesUserWon(num === "" ? 0 : num)}
+              />
+              <Text>matches</Text>
 
-            <Button>Submit</Button>
-          </>
-        ) : (
-          <Text>Loading...</Text>
-        )}
+              <Button>Submit</Button>
+              <EloTable data={eloRankings}></EloTable>
+              <MatchHistTable data={matchHistory}></MatchHistTable>
+            </>
+          ) : (
+            <>
+              <Text>Loading...</Text>
+            </>
+          )}
+        </>
       </MantineProvider>
     </div>
   );

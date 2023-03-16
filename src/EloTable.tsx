@@ -31,7 +31,7 @@ interface TableScrollAreaProps {
     data : playersRow[] ;
 }
 
-export function PlayersTableScrollArea({ data }: TableScrollAreaProps) {
+export function EloTable({ data }: TableScrollAreaProps) {
   const { classes, cx } = useStyles();
   const [scrolled, setScrolled] = useState(false);
 
