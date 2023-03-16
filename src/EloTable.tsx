@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createStyles, Table, ScrollArea, rem } from '@mantine/core';
-import { matchHistRow, playersRow } from './helpers';
+import { generateHash,matchHistRow, playersRow } from './helpers';
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -37,7 +37,7 @@ export function EloTable({ data }: TableScrollAreaProps) {
 
   
   const rows = data.map((row) => (
-    <tr key={row.name}>
+    <tr style={{textAlign : "left"}} key={generateHash()}>
       <td>{row.name}</td>
       <td>{row.elo}</td>
     </tr>
@@ -45,7 +45,7 @@ export function EloTable({ data }: TableScrollAreaProps) {
 
   return (
     <ScrollArea h={300} onScrollPositionChange={({ y }) => setScrolled(y !== 0)}>
-      <Table miw={700}>
+      <Table miw={300}>
         <thead className={cx(classes.header, { [classes.scrolled]: scrolled })}>
           <tr>
             <th>Name</th>

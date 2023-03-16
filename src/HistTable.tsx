@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { createStyles, Table, ScrollArea, rem } from '@mantine/core';
-import { matchHistRow, playersRow, timestampToLocale } from './helpers';
+import { matchHistRow, generateHash, timestampToLocale } from './helpers';
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -37,7 +37,7 @@ export function MatchHistTable({ data }: TableScrollAreaProps) {
 
   
   const rows = data.map((row) => (
-    <tr key={`${row.playerOneName}-${row.playerTwoName}`}>
+    <tr style={{textAlign : "left"}} key={generateHash()}>
       <td>{row.playerOneDidWin ? row.playerOneName : row.playerTwoName}</td>
       <td>{row.playerOneDidWin ? row.playerTwoName : row.playerOneName}</td>
       <td>{timestampToLocale(row.unixTS)}</td>
@@ -46,7 +46,7 @@ export function MatchHistTable({ data }: TableScrollAreaProps) {
 
   return (
     <ScrollArea h={300} onScrollPositionChange={({ y }) => setScrolled(y !== 0)}>
-      <Table miw={700}>
+      <Table miw={300}>
         <thead className={cx(classes.header, { [classes.scrolled]: scrolled })}>
           <tr>
             <th>Won</th>

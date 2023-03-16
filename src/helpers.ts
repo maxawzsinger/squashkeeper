@@ -1,10 +1,5 @@
-import React from "react";
-import logo from "./logo.svg";
 import "./App.css";
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-const EloRating = require("elo-rating");
-
 import {
   getFirestore,
   collection,
@@ -14,6 +9,7 @@ import {
   doc,
   CollectionReference,
 } from "firebase/firestore/lite";
+const EloRating = require("elo-rating");
 
 const firebaseConfig = {
   apiKey: "AIzaSyDhJjDHOkhL4Mfq5O8jvHcnjdNAbYiZPmo",
@@ -74,12 +70,12 @@ export const addNewPlayer = async (newPlayerName: string) => {
   const currentPlayers = await read(mainCollect, config.playerDoc);
   if (currentPlayers && Array.isArray(currentPlayers.data)) {
     await write(mainCollect, config.playerDoc, {
-      data: [...currentPlayers.data, { name: newPlayerName, elo: 0 }],
+      data: [...currentPlayers.data, { name: newPlayerName, elo: 1000 }],
     });
   }
 };
 
-export const updateMatchHist = async (update: matchHistRow) => {
+export const updateMatchHist = async (updates: matchHistRow[]) => {
   const currentHist = await read(mainCollect, config.matchHistDoc);
   const currentPlayers = await read(mainCollect, config.playerDoc);
   console.log("current hist", currentHist);
@@ -92,30 +88,47 @@ export const updateMatchHist = async (update: matchHistRow) => {
   ) {
     //update history
     write(mainCollect, config.matchHistDoc, {
-      data: [...currentHist.data, update],
+      data: [...currentHist.data, ...updates],
     });
     //update elos using
     //https://www.npmjs.com/package/elo-rating?activeTab=explore
     const playerOne = currentPlayers.data.find(
-      (player) => player.name === update.playerOneName
+      (player) => player.name === updates[0].playerOneName
     );
     const playerTwo = currentPlayers.data.find(
-      (player) => player.name === update.playerTwoName
+      (player) => player.name === updates[0].playerTwoName
     );
 
-    let result: any;
-    if (update.playerOneDidWin) {
-      result = EloRating.calculate(playerOne.elo, playerTwo.elo);
-    } else {
-      result = EloRating.calculate(playerOne.elo, playerTwo.elo, false);
+    //iteratively calculate elos for batch of games
+    const shuffledUpdates = shuffle(updates); //as match hist update does not specify in what order games were won or lost, shuffle to try keep things fair
+    let runningElos: any = {
+      playerRating: playerOne.elo,
+      opponentRating: playerTwo.elo,
+    };
+    //initialise as current elo
+    for (const update of shuffledUpdates) {
+      if (update.playerOneDidWin) {
+        runningElos = EloRating.calculate(
+          runningElos.playerRating,
+          runningElos.opponentRating
+        );
+      } else {
+        runningElos = EloRating.calculate(
+          runningElos.playerRating,
+          runningElos.opponentRating,
+          false
+        );
+      }
+      console.log(runningElos)
     }
+
     await write(mainCollect, config.playerDoc, {
       data: currentPlayers.data.map((player) => {
         if (player.name === playerOne.name) {
-          return { ...playerOne, elo: result.playerRating };
+          return { ...playerOne, elo: runningElos.playerRating };
         }
         if (player.name === playerTwo.name) {
-          return { ...playerTwo, elo: result.opponentRating };
+          return { ...playerTwo, elo: runningElos.opponentRating };
         }
         return player;
       }),
@@ -126,7 +139,7 @@ export const updateMatchHist = async (update: matchHistRow) => {
 };
 
 export const timestampToLocale = (ts: number) => {
-  const date = new Date(ts * 1000); // Convert Unix timestamp to milliseconds and create new Date object
+  const date = new Date(ts); // Convert Unix timestamp to milliseconds and create new Date object
   const daysOfWeek = [
     "Sunday",
     "Monday",
@@ -155,9 +168,39 @@ export const timestampToLocale = (ts: number) => {
   const dayOfMonth = date.getDate();
   const month = monthsOfYear[date.getMonth()];
   const year = date.getFullYear();
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  const seconds = date.getSeconds();
 
-  return `${dayOfWeek}, ${month} ${dayOfMonth}, ${year} at ${hours}:${minutes}:${seconds}`;
+
+  return `${dayOfWeek}, ${month} ${dayOfMonth}, ${year}`;
 };
+
+function shuffle(array: any[]) {
+  let currentIndex = array.length,
+    randomIndex;
+
+  // While there remain elements to shuffle.
+  while (currentIndex != 0) {
+    // Pick a remaining element.
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array[currentIndex], array[randomIndex]] = [
+      array[randomIndex],
+      array[currentIndex],
+    ];
+  }
+
+  return array;
+}
+
+
+export function generateHash() {
+  let hash = '';
+  const possibleChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+  for (let i = 0; i < 5; i++) {
+    hash += possibleChars.charAt(Math.floor(Math.random() * possibleChars.length));
+  }
+
+  return hash;
+}
